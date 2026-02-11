@@ -1,0 +1,14 @@
+# 深度图像匹配算法配置
+
+# CLIP编码器配置
+clip:
+  model_name: "ViT-B/32"
+  device: "cpu"
+  batch_size: 8
+  normalize: true
+
+# 匹配参数
+matcher:
+  similarity_threshold: 0.75
+  max_results: 10
+  metric: "cosine"

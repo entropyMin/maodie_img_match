@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图像配对系统</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1, h2, h3, h4 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            gap: 20px;
+        }
+        .col-md-6 {
+            flex: 1;
+            min-width: 500px;
+            padding: 0 15px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .gallery-container {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 350px;
+            background-color: #ffffff;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .gallery-items {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            margin-top: 15px;
+            width: 100%;
+            overflow-y: auto;
+            max-height: 300px;
+            padding: 10px;
+        }
+        .gallery-item {
+            display: inline-block;
+            margin: 10px;
+            position: relative;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .gallery-item:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+        }
+        .gallery-item img {
+            max-width: 180px;
+            max-height: 180px;
+            object-fit: contain;
+            background-color: #f8f9fa;
+        }
+        .gallery-item .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+        .gallery-item .remove-btn:hover {
+            background-color: #dc3545;
+            transform: scale(1.1);
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 5px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        button:hover {
+            background-color: #0056b3;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button.btn-outline-primary {
+            background-color: white;
+            color: #007bff;
+            border: 2px solid #007bff;
+        }
+        button.btn-outline-primary:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        button.btn-outline-danger {
+            background-color: white;
+            color: #dc3545;
+            border: 2px solid #dc3545;
+        }
+        button.btn-outline-danger:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+        button.btn-primary {
+            background-color: #007bff;
+        }
+        button.btn-primary:hover {
+            background-color: #0056b3;
+        }
+        button.btn-success {
+            background-color: #28a745;
+        }
+        button.btn-success:hover {
+            background-color: #218838;
+        }
+        button.btn-lg {
+            padding: 14px 28px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .info-box {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            height: 100%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .spinner-border {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f0f0f0;
+            border-top: 6px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border: 1px solid #e0e0e0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .mt-2 { margin-top: 10px; }
+        .mt-3 { margin-top: 15px; }
+        .mt-5 { margin-top: 30px; }
+        .mb-3 { margin-bottom: 15px; }
+        .mb-4 { margin-bottom: 20px; }
+        .mb-5 { margin-bottom: 30px; }
+        .hidden {
+            display: none !important;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        #matchInfo {
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        .upload-area {
+            text-align: center;
+            width: 100%;
+        }
+        .trainset-input-container {
+            max-width: 85%;
+            margin: 0 auto;
+            text-align: left;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .trainset-input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            transition: border-color 0.2s ease;
+            box-sizing: border-box;
+            display: block;
+        }
+        .trainset-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        .trainset-label {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+            color: #333;
+            text-align: left;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .trainset-info-box {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 0 auto;
+            max-width: 90%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        #trainsetMode .row {
+            display: block;
+            margin-bottom: 20px;
+        }
+        #trainsetMode .col-md-12 {
+            flex: none;
+            width: 100%;
+            padding: 0;
+        }
+        #trainsetMode h4 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        #trainsetMode .mb-3 {
+            margin-bottom: 25px;
+        }
+        #normalMode .row.mb-4 .col-md-12.text-center {
+            display: block;
+            width: 100%;
+        }
+        .trainset-info-box .row {
+            margin: 0;
+            padding: 0;
+        }
+        .trainset-info-box .col-md-12 {
+            padding: 0;
+            margin: 0;
+        }
+        #trainsetMatchInfo {
+            text-align: left;
+            margin: 0 auto;
+            padding: 0;
+            display: block;
+            max-width: 85%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-5">图像配对系统</h1>
+        
+        <div class="text-center mb-4">
+            <button id="modeToggleBtn" class="btn btn-outline-primary" onclick="toggleMode()">
+                切换为trainset模式
+            </button>
+        </div>
+        
+        <h3 class="mb-4">图像配对（传统算法版）</h3>
+        
+        <!-- 普通模式界面 -->
+        <div id="normalMode">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h4>A组图片（原图，有顺序）</h4>
+                    <div class="gallery-container mb-3" id="galleryA">
+                        <input type="file" id="fileInputA" multiple accept="image/*" style="display: none;">
+                        <div class="upload-area">
+                            <button class="btn btn-outline-primary" onclick="document.getElementById('fileInputA').click()">
+                                上传图片
+                            </button>
+                            <button class="btn btn-outline-danger mt-2" onclick="clearGallery('A')">
+                                清空图片
+                            </button>
+                            <div class="gallery-items" id="galleryItemsA"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h4>B组图片（重绘图，乱序）</h4>
+                    <div class="gallery-container mb-3" id="galleryB">
+                        <input type="file" id="fileInputB" multiple accept="image/*" style="display: none;">
+                        <div class="upload-area">
+                            <button class="btn btn-outline-primary" onclick="document.getElementById('fileInputB').click()">
+                                上传图片
+                            </button>
+                            <button class="btn btn-outline-danger mt-2" onclick="clearGallery('B')">
+                                清空图片
+                            </button>
+                            <div class="gallery-items" id="galleryItemsB"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-12 text-center">
+                    <button class="btn btn-primary btn-lg" onclick="startMatching()">
+                        开始匹配
+                    </button>
+                    
+                    <div class="loading mt-3" id="loading">
+                        <div class="spinner-border" role="status"></div>
+                        <p class="mt-2">匹配中，请稍候...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4" id="resultSection" style="display: none;">
+                <div class="col-md-12">
+                    <h4>按A组顺序匹配后的图片</h4>
+                    <div class="gallery-container mb-3" id="resultGallery">
+                        <div class="gallery-items" id="resultItems"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6" id="infoSection" style="display: none;">
+                    <h4>匹配信息</h4>
+                    <div class="info-box">
+                        <pre id="matchInfo"></pre>
+                    </div>
+                </div>
+                
+                <div class="col-md-6" id="downloadSection" style="display: none;">
+                    <h4>下载匹配结果</h4>
+                    <div class="info-box">
+                        <button class="btn btn-success btn-lg" onclick="downloadResults('zip')">
+                            下载匹配图片（ZIP）
+                        </button>
+                        <button class="btn btn-primary btn-lg mt-2" onclick="downloadResults('batch')">
+                            直接批量下载图片
+                        </button>
+                        <p class="mt-3">选择下载方式：ZIP压缩包或直接批量下载</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- trainset模式界面 -->
+        <div id="trainsetMode" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h4>Trainset模式配置</h4>
+                    <div class="trainset-info-box">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="trainset-input-container">
+                                    <label for="folderA" class="trainset-label">A组图片文件夹地址</label>
+                                    <input type="text" class="trainset-input" id="folderA" placeholder="例如: /path/to/folderA">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="trainset-input-container">
+                                    <label for="folderB" class="trainset-label">B组图片文件夹地址</label>
+                                    <input type="text" class="trainset-input" id="folderB" placeholder="例如: /path/to/folderB">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="trainset-input-container">
+                                    <label for="outputFolder" class="trainset-label">输出文件夹C地址</label>
+                                    <input type="text" class="trainset-input" id="outputFolder" placeholder="例如: /path/to/folderC">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <button class="btn btn-primary btn-lg" onclick="startTrainsetMatching()">
+                                    开始Trainset匹配
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-12" id="trainsetResultSection" style="display: none;">
+                    <h4>Trainset匹配结果</h4>
+                    <div class="trainset-info-box">
+                        <pre id="trainsetMatchInfo"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 存储上传的图片
+        let imagesA = [];
+        let imagesB = [];
+        
+        // 存储匹配结果的文件名
+        let matchedFilenames = [];
+        
+        // 存储当前模式，默认为普通模式
+        let currentMode = 'normal'; // 'normal' 或 'trainset'
+        
+        // 监听文件上传
+        document.getElementById('fileInputA').addEventListener('change', function(e) {
+            handleFileUpload(e, 'A');
+        });
+        
+        document.getElementById('fileInputB').addEventListener('change', function(e) {
+            handleFileUpload(e, 'B');
+        });
+        
+        // 切换模式函数
+        function toggleMode() {
+            const normalMode = document.getElementById('normalMode');
+            const trainsetMode = document.getElementById('trainsetMode');
+            const toggleBtn = document.getElementById('modeToggleBtn');
+            
+            if (currentMode === 'normal') {
+                // 切换到trainset模式
+                normalMode.style.display = 'none';
+                trainsetMode.style.display = 'block';
+                toggleBtn.textContent = '切换为普通模式';
+                currentMode = 'trainset';
+            } else {
+                // 切换到普通模式
+                normalMode.style.display = 'block';
+                trainsetMode.style.display = 'none';
+                toggleBtn.textContent = '切换为trainset模式';
+                currentMode = 'normal';
+            }
+        }
+        
+        function handleFileUpload(event, group) {
+            const files = Array.from(event.target.files);
+            const galleryItems = group === 'A' ? 'galleryItemsA' : 'galleryItemsB';
+            const imagesArray = group === 'A' ? imagesA : imagesB;
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgElement = document.createElement('div');
+                    imgElement.className = 'gallery-item';
+                    imgElement.innerHTML = `
+                        <img src="${e.target.result}" alt="${file.name}">
+                        <button class="remove-btn" onclick="removeImage('${group}', ${imagesArray.length})">×</button>
+                    `;
+                    document.getElementById(galleryItems).appendChild(imgElement);
+                    
+                    // 保存图片信息
+                    imagesArray.push({
+                        file: file,
+                        name: file.name,
+                        dataUrl: e.target.result
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // 清空文件输入，以便再次选择相同文件
+            event.target.value = '';
+        }
+        
+        function removeImage(group, index) {
+            const imagesArray = group === 'A' ? imagesA : imagesB;
+            const galleryItems = group === 'A' ? 'galleryItemsA' : 'galleryItemsB';
+            
+            // 移除图片数据
+            imagesArray.splice(index, 1);
+            
+            // 重新渲染图库
+            renderGallery(group);
+        }
+        
+        function renderGallery(group) {
+            const imagesArray = group === 'A' ? imagesA : imagesB;
+            const galleryItems = group === 'A' ? 'galleryItemsA' : 'galleryItemsB';
+            const container = document.getElementById(galleryItems);
+            
+            // 清空容器
+            container.innerHTML = '';
+            
+            // 重新添加所有图片
+            imagesArray.forEach((img, index) => {
+                const imgElement = document.createElement('div');
+                imgElement.className = 'gallery-item';
+                imgElement.innerHTML = `
+                    <img src="${img.dataUrl}" alt="${img.name}">
+                    <button class="remove-btn" onclick="removeImage('${group}', ${index})">×</button>
+                `;
+                container.appendChild(imgElement);
+            });
+        }
+        
+        function clearGallery(group) {
+            const imagesArray = group === 'A' ? imagesA : imagesB;
+            const galleryItems = group === 'A' ? 'galleryItemsA' : 'galleryItemsB';
+            
+            // 清空图片数组
+            imagesArray.length = 0;
+            
+            // 清空图片展示区域
+            document.getElementById(galleryItems).innerHTML = '';
+        }
+        
+        function startMatching() {
+            if (imagesA.length === 0 || imagesB.length === 0) {
+                alert('请上传图片后再开始匹配！');
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('loading').style.display = 'block';
+            
+            // 创建FormData
+            const formData = new FormData();
+            
+            // 添加A组图片
+            imagesA.forEach((img, index) => {
+                formData.append(`imagesA[${index}]`, img.file, img.name);
+            });
+            
+            // 添加B组图片
+            imagesB.forEach((img, index) => {
+                formData.append(`imagesB[${index}]`, img.file, img.name);
+            });
+            
+            // 发送请求
+            fetch('/api/match', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 隐藏加载状态
+                document.getElementById('loading').style.display = 'none';
+                
+                // 显示结果
+                displayResults(data);
+            })
+            .catch(error => {
+                console.error('匹配失败:', error);
+                document.getElementById('loading').style.display = 'none';
+                alert('匹配失败，请重试！');
+            });
+        }
+        
+        function displayResults(data) {
+            // 显示结果区域
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('infoSection').style.display = 'block';
+            document.getElementById('downloadSection').style.display = 'block';
+            
+            // 保存匹配结果的文件名
+            matchedFilenames = data.filenames || [];
+            
+            // 显示匹配信息
+            if (data.info && Array.isArray(data.info)) {
+                document.getElementById('matchInfo').textContent = data.info.join('\n');
+            } else {
+                document.getElementById('matchInfo').textContent = data.info || '匹配完成';
+            }
+            
+            // 显示匹配后的图片
+            const resultItems = document.getElementById('resultItems');
+            resultItems.innerHTML = '';
+            
+            if (data.images && Array.isArray(data.images)) {
+                data.images.forEach((imgData, index) => {
+                    const imgElement = document.createElement('div');
+                    imgElement.className = 'gallery-item';
+                    imgElement.innerHTML = `
+                        <img src="data:image/png;base64,${imgData}" alt="匹配结果 ${index + 1}">
+                    `;
+                    resultItems.appendChild(imgElement);
+                });
+            }
+        }
+        
+        async function downloadResults(downloadType) {
+            if (downloadType === 'zip') {
+                // 下载ZIP文件
+                try {
+                    // 检查浏览器是否支持showSaveFilePicker API
+                    if (window.showSaveFilePicker) {
+                        // 使用现代API让用户选择保存位置
+                        try {
+                            const fileHandle = await window.showSaveFilePicker({
+                                suggestedName: 'matched_images.zip',
+                                types: [{
+                                    description: 'ZIP文件',
+                                    accept: {'application/zip': ['.zip']}
+                                }]
+                            });
+                            
+                            // 使用fetch获取ZIP文件，使用流式处理
+                            const response = await fetch('/api/download');
+                            if (!response.ok) {
+                                throw new Error('下载失败: ' + response.statusText);
+                            }
+                            
+                            // 获取可读流
+                            const readableStream = response.body;
+                            if (!readableStream) {
+                                throw new Error('无法获取响应流');
+                            }
+                            
+                            // 写入文件
+                            const writable = await fileHandle.createWritable();
+                            await readableStream.pipeTo(writable);
+                            console.log('文件已保存');
+                        } catch (error) {
+                            // 如果是用户取消操作，不执行传统下载
+                            if (error.name === 'AbortError') {
+                                console.log('用户取消了文件选择');
+                                return;
+                            }
+                            console.error('现代API下载失败，尝试传统方式:', error);
+                            // 回退到传统下载方式
+                            const a = document.createElement('a');
+                            a.href = '/api/download';
+                            a.download = 'matched_images.zip';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            console.log('ZIP文件下载已开始');
+                        }
+                    } else {
+                        // 传统方式，使用a标签直接下载
+                        const a = document.createElement('a');
+                        a.href = '/api/download';
+                        a.download = 'matched_images.zip';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        console.log('ZIP文件下载已开始');
+                    }
+                } catch (error) {
+                    console.error('下载错误:', error);
+                    alert('下载失败，请重试！');
+                }
+            } else if (downloadType === 'batch') {
+                // 直接批量下载图片
+                batchDownloadImages();
+            }
+        }
+        
+        async function batchDownloadImages() {
+            // 直接批量下载匹配好的图片
+            const resultItems = document.getElementById('resultItems');
+            const imgElements = resultItems.querySelectorAll('.gallery-item img');
+            
+            if (imgElements.length === 0) {
+                alert('没有可下载的图片！');
+                return;
+            }
+            
+            try {
+                // 检查浏览器是否支持 showDirectoryPicker API
+                if (window.showDirectoryPicker) {
+                    // 使用现代API让用户选择保存文件夹
+                    try {
+                        const directoryHandle = await window.showDirectoryPicker({
+                            mode: 'readwrite'
+                        });
+                        
+                        // 遍历所有图片并下载到选定文件夹
+                        let downloadedCount = 0;
+                        
+                        for (let i = 0; i < imgElements.length; i++) {
+                            const img = imgElements[i];
+                            const imgUrl = img.src;
+                            // 使用保存的文件名，默认使用matched_xxx.png
+                            const filename = matchedFilenames[i] || `matched_${i + 1}.png`;
+                            
+                            // 获取图片数据
+                            const response = await fetch(imgUrl);
+                            if (!response.ok) {
+                                throw new Error(`下载图片失败: ${response.statusText}`);
+                            }
+                            const blob = await response.blob();
+                            
+                            // 在选定文件夹中创建文件
+                            const fileHandle = await directoryHandle.getFileHandle(filename, { create: true });
+                            const writable = await fileHandle.createWritable();
+                            await writable.write(blob);
+                            await writable.close();
+                            
+                            downloadedCount++;
+                            
+                            // 短暂延迟，避免浏览器阻止批量操作
+                            if (i < imgElements.length - 1) {
+                                await new Promise(resolve => setTimeout(resolve, 100));
+                            }
+                        }
+                        
+                        console.log(`已成功下载 ${downloadedCount} 张图片到选定文件夹`);
+                        alert(`已成功下载 ${downloadedCount} 张图片到选定文件夹！`);
+                    } catch (error) {
+                        // 如果是用户取消操作，不执行传统下载
+                        if (error.name === 'AbortError') {
+                            console.log('用户取消了文件夹选择');
+                            return;
+                        }
+                        console.error('现代API批量下载失败:', error);
+                        // 回退到传统下载方式
+                        traditionalBatchDownload(imgElements);
+                    }
+                } else {
+                    // 传统方式，使用a标签直接下载
+                    traditionalBatchDownload(imgElements);
+                }
+            } catch (error) {
+                console.error('批量下载错误:', error);
+                alert('批量下载失败，请重试！');
+            }
+        }
+        
+        function traditionalBatchDownload(imgElements) {
+            // 传统方式，使用a标签直接下载，下载到浏览器默认位置
+            const downloadLink = document.createElement('a');
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);
+            
+            alert(`将下载 ${imgElements.length} 张图片到浏览器默认下载位置。\n\n如果浏览器阻止批量下载，请在浏览器设置中允许！`);
+            
+            // 遍历所有图片并下载
+            imgElements.forEach((img, index) => {
+                const imgUrl = img.src;
+                // 使用保存的文件名，默认使用matched_xxx.png
+                const filename = matchedFilenames[index] || `matched_${index + 1}.png`;
+                
+                // 设置下载链接
+                downloadLink.href = imgUrl;
+                downloadLink.download = filename;
+                
+                // 触发下载
+                downloadLink.click();
+                
+                // 短暂延迟，避免浏览器阻止批量下载
+                if (index < imgElements.length - 1) {
+                    setTimeout(() => {}, 100);
+                }
+            });
+            
+            // 移除下载链接
+            document.body.removeChild(downloadLink);
+            
+            console.log(`已开始批量下载 ${imgElements.length} 张图片到浏览器默认下载位置`);
+        }
+        
+        // Trainset模式匹配函数
+        function startTrainsetMatching() {
+            // 获取输入的文件夹路径
+            const folderA = document.getElementById('folderA').value;
+            const folderB = document.getElementById('folderB').value;
+            const outputFolder = document.getElementById('outputFolder').value;
+            
+            // 验证输入
+            if (!folderA || !folderB || !outputFolder) {
+                alert('请输入完整的文件夹路径！');
+                return;
+            }
+            
+            // 创建请求数据
+            const requestData = {
+                folderA: folderA,
+                folderB: folderB,
+                outputFolder: outputFolder
+            };
+            
+            // 显示加载状态
+            alert('开始Trainset匹配，请稍候...');
+            
+            // 发送请求
+            fetch('/api/trainset-match', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 显示结果
+                document.getElementById('trainsetResultSection').style.display = 'block';
+                const matchInfoElement = document.getElementById('trainsetMatchInfo');
+                
+                if (data.error) {
+                    matchInfoElement.textContent = `错误: ${data.error}`;
+                } else {
+                    matchInfoElement.textContent = data.info.join('\n');
+                }
+            })
+            .catch(error => {
+                console.error('Trainset匹配失败:', error);
+                alert('Trainset匹配失败，请重试！');
+            });
+        }
+    </script>
+</body>
+</html>

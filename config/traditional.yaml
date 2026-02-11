@@ -1,0 +1,17 @@
+# 传统图像匹配算法配置
+
+# 感知哈希配置
+phash:
+  hash_size: 8
+  highfreq_factor: 4
+
+# 结构提取配置
+structure:
+  canny_threshold1: 100
+  canny_threshold2: 200
+  min_contour_area: 100
+
+# 匹配参数
+matcher:
+  similarity_threshold: 0.8
+  max_results: 10
